@@ -20,7 +20,7 @@
     "jsdom": "^22.1.0"
   },
   "devDependencies": {
-    "@types/chokidar": "^2.1.8",
+    "@types/chokidar": "^2.1.7",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/mime-types": "^2.1.4",

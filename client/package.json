@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "besogo": "^0.0.2-alpha",
-    "dompurify": "^3.0.6",
     "pdfjs-dist": "^3.11.174",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
