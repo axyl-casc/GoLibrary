@@ -1,0 +1,21 @@
+.favorite-toggle {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.favorite-toggle:hover {
+  transform: scale(1.1);
+}
+
+.favorite-toggle.favored {
+  color: #c77a1f;
+}

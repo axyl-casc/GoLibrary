@@ -1,0 +1,66 @@
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  preferences JSON DEFAULT '{}',
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL
+);
+
+CREATE TABLE favorites (
+  userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  itemId INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  createdAt INTEGER NOT NULL,
+  PRIMARY KEY (userId, itemId)
+);
+
+CREATE TABLE pdf_positions (
+  userId TEXT NOT NULL,
+  itemId INTEGER NOT NULL,
+  page INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+  PRIMARY KEY (userId, itemId),
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (itemId) REFERENCES items(id) ON DELETE CASCADE
+);
+
+CREATE TABLE pdf_bookmarks (
+  id INTEGER PRIMARY KEY,
+  userId TEXT NOT NULL,
+  itemId INTEGER NOT NULL,
+  page INTEGER NOT NULL,
+  note TEXT,
+  createdAt INTEGER NOT NULL,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (itemId) REFERENCES items(id) ON DELETE CASCADE
+);
+
+CREATE TABLE sgf_positions (
+  userId TEXT NOT NULL,
+  itemId INTEGER NOT NULL,
+  nodeIndex INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+  PRIMARY KEY (userId, itemId),
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (itemId) REFERENCES items(id) ON DELETE CASCADE
+);
+
+CREATE TABLE sgf_node_favorites (
+  id INTEGER PRIMARY KEY,
+  userId TEXT NOT NULL,
+  itemId INTEGER NOT NULL,
+  nodeIndex INTEGER NOT NULL,
+  createdAt INTEGER NOT NULL,
+  UNIQUE(userId, itemId, nodeIndex),
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (itemId) REFERENCES items(id) ON DELETE CASCADE
+);
+
+CREATE TABLE recents (
+  id INTEGER PRIMARY KEY,
+  userId TEXT NOT NULL,
+  itemId INTEGER NOT NULL,
+  ts INTEGER NOT NULL,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (itemId) REFERENCES items(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_recents_user_ts ON recents(userId, ts DESC);

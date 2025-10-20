@@ -1,0 +1,13 @@
+node_modules/
+client/node_modules/
+server/node_modules/
+server/dist/
+client/dist/
+*.tgz
+data/library.db
+data/thumbs/
+!data/thumbs/.gitkeep
+!data/.gitkeep
+!library/.gitkeep
+.DS_Store
+npm-debug.log*
