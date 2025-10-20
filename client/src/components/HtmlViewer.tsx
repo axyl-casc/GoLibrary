@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import DOMPurify from 'dompurify';
+import { useEffect, useMemo } from 'react';
 import { addRecent } from '../api/api';
 import { ItemSummary } from '../state/types';
 import FavoritesToggle from './FavoritesToggle';
@@ -13,18 +12,10 @@ interface HtmlViewerProps {
 }
 
 export default function HtmlViewer({ userId, item, isFavorite, onToggleFavorite }: HtmlViewerProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const frameSrc = useMemo(() => `/api/items/${item.id}/html/`, [item.id]);
 
   useEffect(() => {
-    const load = async () => {
-      const response = await fetch(`/api/items/${item.id}/content`);
-      const html = await response.text();
-      if (containerRef.current) {
-        containerRef.current.innerHTML = DOMPurify.sanitize(html);
-      }
-      await addRecent(userId, item.id);
-    };
-    load();
+    addRecent(userId, item.id);
   }, [item.id, userId]);
 
   return (
@@ -38,7 +29,12 @@ export default function HtmlViewer({ userId, item, isFavorite, onToggleFavorite 
           }}
         />
       </div>
-      <div className="html-content" ref={containerRef} />
+      <iframe
+        className="html-frame"
+        src={frameSrc}
+        title={item.title}
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+      />
     </div>
   );
 }

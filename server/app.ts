@@ -159,6 +159,42 @@ app.get('/api/items/:id/content', (req, res) => {
   }
 });
 
+function serveHtmlAsset(req: express.Request, res: express.Response) {
+  const { id } = req.params;
+  const item = db.prepare('SELECT * FROM items WHERE id = ?').get(id);
+  if (!item || item.type !== 'html') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  const itemFullPath = path.join(config.libraryRoot, item.path);
+  if (!fs.existsSync(itemFullPath)) {
+    return res.status(404).json({ error: 'Missing file' });
+  }
+
+  const assetParam = ((req.params as any)[0] as string | undefined) ?? '';
+  const requested = assetParam === '' || assetParam === '/' ? path.basename(itemFullPath) : assetParam;
+  const baseDir = path.dirname(itemFullPath);
+  const resolved = path.resolve(baseDir, requested);
+
+  if (!resolved.startsWith(baseDir)) {
+    return res.status(400).json({ error: 'Invalid asset path' });
+  }
+  if (!fs.existsSync(resolved)) {
+    return res.status(404).json({ error: 'Asset not found' });
+  }
+
+  const stats = fs.statSync(resolved);
+  if (stats.isDirectory()) {
+    return res.status(403).json({ error: 'Cannot serve directory' });
+  }
+
+  const type = mime.lookup(resolved) || 'application/octet-stream';
+  res.type(type as string).sendFile(resolved);
+}
+
+app.get('/api/items/:id/html', serveHtmlAsset);
+app.get('/api/items/:id/html/*', serveHtmlAsset);
+
 app.get('/api/thumbnails/:itemId', async (req, res) => {
   const { itemId } = req.params;
   const variant = (req.query.variant as string) || 'cover';

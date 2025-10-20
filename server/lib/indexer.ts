@@ -4,13 +4,13 @@ import { config } from '../config';
 import { db, now } from './db';
 import { generateThumbnail } from './thumbs';
 
-const SUPPORTED_EXT = new Map([
+type ItemType = 'pdf' | 'sgf' | 'html';
+
+const SUPPORTED_EXT: Map<string, ItemType> = new Map([
   ['.pdf', 'pdf'],
   ['.sgf', 'sgf'],
   ['.html', 'html']
-] as const);
-
-type ItemType = 'pdf' | 'sgf' | 'html';
+]);
 
 function readPdfMetadata(filePath: string): { title?: string; pages?: number } {
   try {
