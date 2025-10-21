@@ -13,17 +13,22 @@ interface ShelfProps {
   onToggleFavorite: (item: ItemSummary) => void;
 }
 
+const PAGE_SIZE = 40;
+
 export default function Shelf({ query, userId, favorites, onSelect, onToggleFavorite }: ShelfProps) {
   const [items, setItems] = useState<ItemSummary[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const observerRef = useRef<HTMLDivElement | null>(null);
-
   const queryKey = useMemo(() => {
     const userKey = query.favorites === 'true' ? userId ?? null : null;
     return JSON.stringify({ ...query, __user: userKey });
   }, [query, userId]);
+
+  const observerRef = useRef<HTMLDivElement | null>(null);
+  const activeRequestRef = useRef<{ id: number; key: string; page: number } | null>(null);
+  const requestIdRef = useRef(0);
+  const lastQueryKeyRef = useRef(queryKey);
 
   useEffect(() => {
     setItems([]);
@@ -32,23 +37,55 @@ export default function Shelf({ query, userId, favorites, onSelect, onToggleFavo
   }, [queryKey]);
 
   useEffect(() => {
-    if (!hasMore || loading) return;
+    const isNewQuery = lastQueryKeyRef.current !== queryKey;
+    const currentPage = isNewQuery ? 1 : page;
+
+    if (isNewQuery) {
+      activeRequestRef.current = null;
+      setLoading(false);
+    }
+
+    lastQueryKeyRef.current = queryKey;
+
+    if (!hasMore) return;
+
+    if (
+      activeRequestRef.current &&
+      activeRequestRef.current.key === queryKey &&
+      activeRequestRef.current.page === currentPage
+    ) {
+      return;
+    }
+
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    activeRequestRef.current = { id: requestId, key: queryKey, page: currentPage };
     setLoading(true);
+
     const params = {
       ...query,
-      page,
-      limit: 40,
+      page: currentPage,
+      limit: PAGE_SIZE,
       userId: query.favorites === 'true' ? userId : undefined
     };
+
     getItems(params)
       .then((results) => {
-        setItems((prev) => (page === 1 ? results : [...prev, ...results]));
-        if (results.length < 40) {
+        if (activeRequestRef.current?.id !== requestId) {
+          return;
+        }
+        setItems((prev) => (currentPage === 1 ? results : [...prev, ...results]));
+        if (results.length < PAGE_SIZE) {
           setHasMore(false);
         }
       })
-      .finally(() => setLoading(false));
-  }, [page, query.favorites, queryKey, userId]);
+      .finally(() => {
+        if (activeRequestRef.current?.id === requestId) {
+          activeRequestRef.current = null;
+          setLoading(false);
+        }
+      });
+  }, [hasMore, page, queryKey, userId]);
 
   useEffect(() => {
     const sentinel = observerRef.current;
