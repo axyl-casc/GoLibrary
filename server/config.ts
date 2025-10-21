@@ -1,6 +1,6 @@
 import path from 'path';
 
-const rootDir = process.cwd();
+const rootDir = path.resolve(__dirname, '..');
 
 export interface AppConfig {
   libraryRoot: string;
