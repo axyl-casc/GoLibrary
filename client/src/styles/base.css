@@ -54,6 +54,16 @@ header h1 {
   background: rgba(255, 255, 255, 0.9);
 }
 
+select {
+  color: #1f1b16;
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+select option {
+  color: #1f1b16;
+  background-color: #ffffff;
+}
+
 .user-menu .user-form {
   display: flex;
   gap: 0.5rem;
