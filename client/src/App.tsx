@@ -184,10 +184,11 @@ export default function App() {
       </header>
       {!isViewerTab && (
         <>
-          <Filters query={query} onChange={update} />
+          <Filters query={query} onChange={update} favoritesEnabled={Boolean(currentUserId)} />
           <div className="main-content">
             <Shelf
               query={query}
+              userId={currentUserId ?? undefined}
               favorites={favorites}
               onSelect={handleSelectItem}
               onToggleFavorite={toggleItemFavorite}

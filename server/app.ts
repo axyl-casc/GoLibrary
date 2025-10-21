@@ -39,21 +39,40 @@ app.patch('/api/users/:id', userManagementDisabled);
 app.delete('/api/users/:id', userManagementDisabled);
 
 app.get('/api/items', (req, res) => {
-  const { type, folder, q, sort = 'updatedAt', page = '1', limit = '40' } = req.query as Record<string, string>;
+  const {
+    type,
+    folder,
+    q,
+    sort = 'updatedAt',
+    page = '1',
+    limit = '40',
+    favorites,
+    userId
+  } = req.query as Record<string, string>;
   const clauses: string[] = [];
-  const params: any[] = [];
+  const whereParams: any[] = [];
+  const joinParams: any[] = [];
+  let joinClause = '';
+
+  if (favorites === 'true') {
+    if (!userId) {
+      return res.status(400).json({ error: 'Favorites filter requires userId' });
+    }
+    joinClause = 'INNER JOIN favorites ON favorites.itemId = items.id AND favorites.userId = ?';
+    joinParams.push(userId);
+  }
 
   if (type) {
     clauses.push('type = ?');
-    params.push(type);
+    whereParams.push(type);
   }
   if (folder) {
     clauses.push('folder = ?');
-    params.push(folder);
+    whereParams.push(folder);
   }
   if (q) {
     clauses.push('(title LIKE ? OR path LIKE ?)');
-    params.push(`%${q}%`, `%${q}%`);
+    whereParams.push(`%${q}%`, `%${q}%`);
   }
 
   const pageNum = parseInt(page, 10) || 1;
@@ -76,11 +95,12 @@ app.get('/api/items', (req, res) => {
         SELECT path FROM thumbnails WHERE itemId = items.id AND variant = 'grid'
       ) as gridThumb
       FROM items
+      ${joinClause}
       ${where}
       ${orderBy}
       LIMIT ? OFFSET ?`
     )
-    .all(...params, limitNum, offset);
+    .all(...joinParams, ...whereParams, limitNum, offset);
 
   res.json(
     items.map((item: any) => ({
