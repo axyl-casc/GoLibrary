@@ -12,7 +12,7 @@ import { ItemSummary } from './state/types';
 import './styles/base.css';
 
 export default function App() {
-  const { users, currentUserId, selectUser, createNewUser, updateCurrentUser, deleteUserById } = useUser();
+  const { users, currentUserId, selectUser } = useUser();
   const { query, update } = useQueryState({ sort: 'updatedAt' });
   const [selectedItem, setSelectedItem] = useState<ItemSummary | null>(null);
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
@@ -78,14 +78,7 @@ export default function App() {
     <div className="app">
       <header>
         <h1>Go Library</h1>
-        <UserMenu
-          users={users}
-          currentUserId={currentUserId}
-          onSelectUser={selectUser}
-          onCreateUser={createNewUser}
-          onRenameUser={async (id, name) => updateCurrentUser(id, { name })}
-          onDeleteUser={deleteUserById}
-        />
+        <UserMenu users={users} currentUserId={currentUserId} onSelectUser={selectUser} />
       </header>
       <Filters query={query} onChange={update} />
       <div className="main-content">
