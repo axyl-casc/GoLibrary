@@ -18,7 +18,11 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     throw new Error(await res.text());
   }
   if (res.status === 204) return undefined as T;
-  return res.json();
+
+  const text = await res.text();
+  if (!text.trim()) return undefined as T;
+
+  return JSON.parse(text) as T;
 }
 
 export async function getUsers(): Promise<User[]> {
