@@ -7,7 +7,7 @@ import SgfPuzzleViewer from './components/SgfPuzzleViewer';
 import HtmlViewer from './components/HtmlViewer';
 import UserMenu from './components/UserMenu';
 import SgfModeDialog from './components/SgfModeDialog';
-import { addRecent, getFavorites, toggleFavorite } from './api/api';
+import { getFavorites, getItem, toggleFavorite } from './api/api';
 import { useQueryState } from './state/useQuery';
 import { useUser } from './state/useUser';
 import { ItemSummary } from './state/types';
@@ -16,11 +16,18 @@ import './styles/base.css';
 export default function App() {
   const { users, currentUserId, selectUser } = useUser();
   const { query, update } = useQueryState({ sort: 'updatedAt' });
-  const [selectedItem, setSelectedItem] = useState<ItemSummary | null>(null);
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
-  const [sgfMode, setSgfMode] = useState<'review' | 'puzzle' | null>(null);
   const [pendingSgfItem, setPendingSgfItem] = useState<ItemSummary | null>(null);
   const [showSgfModeDialog, setShowSgfModeDialog] = useState(false);
+  const searchParams = new URLSearchParams(window.location.search);
+  const viewerIdParam = searchParams.get('viewerId');
+  const viewerModeParam = searchParams.get('viewerMode');
+  const viewerId = viewerIdParam ? Number(viewerIdParam) : null;
+  const viewerModeFromParams = viewerModeParam === 'puzzle' ? 'puzzle' : viewerModeParam === 'review' ? 'review' : null;
+  const isViewerTab = viewerId !== null && !Number.isNaN(viewerId);
+  const [viewerItem, setViewerItem] = useState<ItemSummary | null>(null);
+  const [viewerLoading, setViewerLoading] = useState(false);
+  const [viewerError, setViewerError] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentUserId) {
@@ -29,41 +36,57 @@ export default function App() {
   }, [currentUserId]);
 
   useEffect(() => {
-    setSelectedItem(null);
     setPendingSgfItem(null);
-    setSgfMode(null);
     setShowSgfModeDialog(false);
   }, [currentUserId]);
 
-  const handleSelectItem = async (item: ItemSummary) => {
+  useEffect(() => {
+    if (!isViewerTab || viewerId === null) {
+      setViewerItem(null);
+      setViewerError(null);
+      setViewerLoading(false);
+      return;
+    }
+
+    setViewerLoading(true);
+    setViewerError(null);
+    getItem(viewerId)
+      .then((item) => {
+        setViewerItem(item);
+      })
+      .catch((error) => {
+        setViewerError(error instanceof Error ? error.message : 'Failed to load item');
+        setViewerItem(null);
+      })
+      .finally(() => setViewerLoading(false));
+  }, [isViewerTab, viewerId]);
+
+  const handleSelectItem = (item: ItemSummary) => {
     if (item.type === 'sgf') {
       setPendingSgfItem(item);
-      setSelectedItem(null);
-      setSgfMode(null);
       setShowSgfModeDialog(true);
       return;
     }
 
     setPendingSgfItem(null);
-    setSgfMode(null);
-    setSelectedItem(item);
-    if (currentUserId) {
-      await addRecent(currentUserId, item.id);
-    }
+    const url = new URL(window.location.href);
+    url.searchParams.set('viewerId', String(item.id));
+    url.searchParams.delete('viewerMode');
+    window.open(url.toString(), '_blank', 'noopener');
   };
 
   const handleSgfModeSelect = (mode: 'review' | 'puzzle') => {
     if (!pendingSgfItem) return;
-    setSelectedItem(pendingSgfItem);
-    setSgfMode(mode);
+    const url = new URL(window.location.href);
+    url.searchParams.set('viewerId', String(pendingSgfItem.id));
+    url.searchParams.set('viewerMode', mode);
+    window.open(url.toString(), '_blank', 'noopener');
     setPendingSgfItem(null);
     setShowSgfModeDialog(false);
   };
 
   const handleSgfModeCancel = () => {
     setPendingSgfItem(null);
-    setSgfMode(null);
-    setSelectedItem(null);
     setShowSgfModeDialog(false);
   };
 
@@ -82,31 +105,34 @@ export default function App() {
     });
   };
 
+  const activeItem = isViewerTab ? viewerItem : null;
+  const activeSgfMode = isViewerTab ? viewerModeFromParams : null;
+
   const viewer = useMemo(() => {
-    if (!selectedItem || !currentUserId) return null;
-    const isFavorite = favorites.has(selectedItem.id);
+    if (!activeItem || !currentUserId) return null;
+    const isFavorite = favorites.has(activeItem.id);
     const toggleFavoriteWrapper = async (favored: boolean) => {
-      await toggleFavorite(currentUserId, selectedItem.id, favored);
+      await toggleFavorite(currentUserId, activeItem.id, favored);
       setFavorites((prev) => {
         const updated = new Set(prev);
         if (favored) {
-          updated.add(selectedItem.id);
+          updated.add(activeItem.id);
         } else {
-          updated.delete(selectedItem.id);
+          updated.delete(activeItem.id);
         }
         return updated;
       });
     };
 
-    if (selectedItem.type === 'pdf') {
-      return <PdfViewer userId={currentUserId} item={selectedItem} isFavorite={isFavorite} onToggleFavorite={toggleFavoriteWrapper} />;
+    if (activeItem.type === 'pdf') {
+      return <PdfViewer userId={currentUserId} item={activeItem} isFavorite={isFavorite} onToggleFavorite={toggleFavoriteWrapper} />;
     }
-    if (selectedItem.type === 'sgf') {
-      if (sgfMode === 'puzzle') {
+    if (activeItem.type === 'sgf') {
+      if (activeSgfMode === 'puzzle') {
         return (
           <SgfPuzzleViewer
             userId={currentUserId}
-            item={selectedItem}
+            item={activeItem}
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavoriteWrapper}
           />
@@ -115,14 +141,40 @@ export default function App() {
       return (
         <SgfViewer
           userId={currentUserId}
-          item={selectedItem}
+          item={activeItem}
           isFavorite={isFavorite}
           onToggleFavorite={toggleFavoriteWrapper}
         />
       );
     }
-    return <HtmlViewer userId={currentUserId} item={selectedItem} isFavorite={isFavorite} onToggleFavorite={toggleFavoriteWrapper} />;
-  }, [selectedItem, currentUserId, favorites, sgfMode]);
+    return <HtmlViewer userId={currentUserId} item={activeItem} isFavorite={isFavorite} onToggleFavorite={toggleFavoriteWrapper} />;
+  }, [activeItem, currentUserId, favorites, activeSgfMode]);
+
+  const openViewerPrompt = showSgfModeDialog && pendingSgfItem;
+
+  const renderViewerSection = () => {
+    if (!isViewerTab) {
+      return null;
+    }
+
+    if (!currentUserId) {
+      return <div className="viewer-placeholder">Select a user to view items.</div>;
+    }
+
+    if (viewerLoading) {
+      return <div className="viewer-placeholder">Loading item…</div>;
+    }
+
+    if (viewerError) {
+      return <div className="viewer-placeholder error">{viewerError}</div>;
+    }
+
+    if (!viewer) {
+      return <div className="viewer-placeholder">Item not available.</div>;
+    }
+
+    return viewer;
+  };
 
   return (
     <div className="app">
@@ -130,17 +182,21 @@ export default function App() {
         <h1>Go Library</h1>
         <UserMenu users={users} currentUserId={currentUserId} onSelectUser={selectUser} />
       </header>
-      <Filters query={query} onChange={update} />
-      <div className="main-content">
-        <Shelf
-          query={query}
-          favorites={favorites}
-          onSelect={handleSelectItem}
-          onToggleFavorite={toggleItemFavorite}
-        />
-        {viewer}
-      </div>
-      {showSgfModeDialog && pendingSgfItem && (
+      {!isViewerTab && (
+        <>
+          <Filters query={query} onChange={update} />
+          <div className="main-content">
+            <Shelf
+              query={query}
+              favorites={favorites}
+              onSelect={handleSelectItem}
+              onToggleFavorite={toggleItemFavorite}
+            />
+          </div>
+        </>
+      )}
+      {isViewerTab && <div className="viewer-page">{renderViewerSection()}</div>}
+      {openViewerPrompt && (
         <SgfModeDialog
           itemTitle={pendingSgfItem.title}
           onSelect={handleSgfModeSelect}
