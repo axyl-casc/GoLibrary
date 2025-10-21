@@ -104,6 +104,7 @@ Environment variables:
 - The backend automatically scans the `library/` directory on startup and watches for changes with `chokidar`.
 - PDF thumbnails are rendered with `pdfjs-dist` + `node-canvas`; SGF thumbnails use a lightweight renderer to draw the final position.
 - User state (favorites, positions, bookmarks, recents) is stored in `data/library.db`.
+- Example documents are sourced from [GoGameGuru](https://gogameguru.com/) and distributed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 
 ## Credits
 
