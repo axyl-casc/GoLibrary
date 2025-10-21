@@ -25,6 +25,12 @@
   border-radius: 12px;
 }
 
+.viewer-placeholder.error {
+  color: #a4161a;
+  background: rgba(255, 235, 238, 0.9);
+  border: 1px solid rgba(164, 22, 26, 0.2);
+}
+
 .pdf-viewer canvas {
   width: 100%;
   border-radius: 12px;
