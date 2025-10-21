@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import 'besogo/besogo.all.js';
+import 'besogo/css/besogo.css';
+import 'besogo/css/board-wood.css';
 import { addRecent, getSgfNodeFavorites, getSgfPosition, saveSgfPosition, toggleSgfNodeFavorite } from '../api/api';
 import { ItemSummary } from '../state/types';
 import FavoritesToggle from './FavoritesToggle';
@@ -20,10 +22,29 @@ interface SgfViewerProps {
 
 export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }: SgfViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const boardContainerRef = useRef<HTMLDivElement | null>(null);
+  const viewerRootRef = useRef<HTMLDivElement | null>(null);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
   const [editor, setEditor] = useState<any>(null);
   const [nodeIndex, setNodeIndex] = useState(0);
   const [nodeFavorites, setNodeFavorites] = useState<Set<number>>(new Set());
   const [autoplay, setAutoplay] = useState(false);
+
+  const updateBoardSize = useCallback(() => {
+    const container = containerRef.current;
+    const board = boardContainerRef.current;
+    const viewerRoot = viewerRootRef.current;
+    if (!container || !board || !viewerRoot) return;
+    const viewportHeight = window.innerHeight;
+    const viewerTop = viewerRoot.getBoundingClientRect().top;
+    const toolbarHeight = toolbarRef.current?.offsetHeight ?? 0;
+    const availableHeight = Math.max(viewportHeight - viewerTop - toolbarHeight - 48, 240);
+    const containerWidth = container.getBoundingClientRect().width;
+    const size = Math.min(containerWidth, availableHeight);
+    board.style.width = `${size}px`;
+    board.style.height = `${size}px`;
+    container.style.height = `${size}px`;
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
@@ -61,12 +82,22 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
     const load = async () => {
       if (!containerRef.current) return;
       containerRef.current.innerHTML = '';
+      containerRef.current.classList.add('besogo-container');
+      containerRef.current.classList.add('besogo-custom-container');
+      containerRef.current.style.justifyContent = 'center';
+      containerRef.current.style.alignItems = 'center';
+      boardContainerRef.current = null;
       const response = await fetch(`/api/items/${item.id}/content`);
       const sgfText = await response.text();
       const { besogo } = window;
       const newEditor = besogo.makeEditor(19, 19);
       newEditor.setTool('navOnly');
-      besogo.makeBoardDisplay(containerRef.current, newEditor);
+      const boardDiv = document.createElement('div');
+      boardDiv.className = 'besogo-board';
+      containerRef.current.appendChild(boardDiv);
+      boardContainerRef.current = boardDiv;
+      besogo.makeBoardDisplay(boardDiv, newEditor);
+      updateBoardSize();
       const parsed = besogo.parseSgf(sgfText);
       besogo.loadSgf(parsed, newEditor);
       newEditor.addListener(async (msg: any) => {
@@ -86,7 +117,16 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
       setNodeFavorites(new Set(favorites));
     };
     load();
-  }, [item.id, userId]);
+  }, [item.id, updateBoardSize, userId]);
+
+  useEffect(() => {
+    if (!editor) return;
+    updateBoardSize();
+    window.addEventListener('resize', updateBoardSize);
+    return () => {
+      window.removeEventListener('resize', updateBoardSize);
+    };
+  }, [editor, updateBoardSize]);
 
   function moveToNodeInternal(ed: any, target: number) {
     while (ed.getCurrent().parent) {
@@ -132,8 +172,8 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
   };
 
   return (
-    <div className="viewer sgf-viewer">
-      <div className="viewer-toolbar">
+    <div className="viewer sgf-viewer" ref={viewerRootRef}>
+      <div className="viewer-toolbar" ref={toolbarRef}>
         <button onClick={goFirst}>⏮</button>
         <button onClick={goPrev}>◀</button>
         <span>Move {nodeIndex}</span>
