@@ -98,3 +98,65 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  max-width: 420px;
+  width: 100%;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: center;
+}
+
+.modal h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.modal-actions button {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 1rem;
+}
+
+.modal-primary {
+  background: #1f7a8c;
+  color: #ffffff;
+}
+
+.modal-secondary {
+  background: #f0f4f8;
+  color: #1f1b16;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.modal-cancel {
+  align-self: center;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 0.95rem;
+  text-decoration: underline;
+}
