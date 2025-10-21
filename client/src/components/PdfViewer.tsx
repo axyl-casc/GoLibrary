@@ -72,7 +72,7 @@ export default function PdfViewer({ userId, item, isFavorite, onToggleFavorite }
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !doc) return;
+    if (!canvas || !doc || loading) return;
     const renderPage = async () => {
       const page = await doc.getPage(pageNumber);
       let renderScale = scale;
@@ -90,7 +90,7 @@ export default function PdfViewer({ userId, item, isFavorite, onToggleFavorite }
       await savePdfPosition(userId, item.id, pageNumber);
     };
     renderPage();
-  }, [autoFit, doc, fitPageToWindow, pageNumber, scale, item.id, userId]);
+  }, [autoFit, doc, fitPageToWindow, pageNumber, scale, item.id, userId, loading]);
 
   useEffect(() => {
     if (!autoFit) return;
