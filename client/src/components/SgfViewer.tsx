@@ -75,18 +75,19 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
       if (cancelled) return;
       const container = containerRef.current;
       if (!container) return;
+      const containerWithEditor = container as HTMLDivElement & { besogoEditor?: any };
       const { besogo } = window;
       if (!besogo) {
         throw new Error('BesoGo is not available in the window scope');
       }
-      if (!container.classList.contains('besogo-container')) {
+      if (!container.classList.contains('besogo-container') || !containerWithEditor.besogoEditor) {
         container.innerHTML = '';
         besogo.create(container, {
           panels: 'control+names+comment+tree',
           tool: 'navOnly',
         });
       }
-      const newEditor = container.besogoEditor;
+      const newEditor = containerWithEditor.besogoEditor;
       if (!newEditor) {
         throw new Error('Failed to initialize BesoGo viewer');
       }
