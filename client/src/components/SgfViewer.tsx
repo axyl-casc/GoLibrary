@@ -83,8 +83,10 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
   }, [editor]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const load = async () => {
-      if (!containerRef.current) return;
+      if (!containerRef.current || cancelled) return;
       containerRef.current.innerHTML = '';
       containerRef.current.classList.add('besogo-container');
       containerRef.current.classList.add('besogo-custom-container');
@@ -95,21 +97,27 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
       boardContainerRef.current = null;
       panelsContainerRef.current = null;
       const response = await fetch(`/api/items/${item.id}/content`);
+      if (cancelled) return;
       const sgfText = await response.text();
+      if (cancelled) return;
       const { besogo } = window;
       const newEditor = besogo.makeEditor(19, 19);
       newEditor.setTool('navOnly');
       const boardDiv = document.createElement('div');
       boardDiv.className = 'besogo-board';
+      if (cancelled) return;
       containerRef.current.appendChild(boardDiv);
       boardContainerRef.current = boardDiv;
       const panelsDiv = document.createElement('div');
       panelsDiv.className = 'besogo-panels';
+      if (cancelled) return;
       containerRef.current.appendChild(panelsDiv);
       panelsContainerRef.current = panelsDiv;
+      if (cancelled) return;
       besogo.makeBoardDisplay(boardDiv, newEditor);
       besogo.makeControlPanel(panelsDiv, newEditor);
       updateBoardSize();
+      if (cancelled) return;
       const parsed = besogo.parseSgf(sgfText);
       besogo.loadSgf(parsed, newEditor);
       newEditor.addListener(async (msg: any) => {
@@ -120,15 +128,22 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
           await saveSgfPosition(userId, item.id, moveNumber);
         }
       });
+      if (cancelled) return;
       setEditor(newEditor);
       await addRecent(userId, item.id);
+      if (cancelled) return;
       const saved = await getSgfPosition(userId, item.id);
+      if (cancelled) return;
       moveToNodeInternal(newEditor, saved?.nodeIndex ?? 0);
       setNodeIndex(saved?.nodeIndex ?? 0);
       const favorites = await getSgfNodeFavorites(userId, item.id);
+      if (cancelled) return;
       setNodeFavorites(new Set(favorites));
     };
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [item.id, updateBoardSize, userId]);
 
   useEffect(() => {
