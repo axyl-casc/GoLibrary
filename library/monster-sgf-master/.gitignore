@@ -1,0 +1,10 @@
+*~
+*.swp
+
+# GPub Files
+*.log
+*.aux
+*.toc
+*.out
+*.tex
+*.pdf
