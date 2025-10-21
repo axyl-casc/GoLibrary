@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import 'besogo/besogo.all.js';
+import '../lib/besogoPatch';
 import 'besogo/css/besogo.css';
 import 'besogo/css/board-wood.css';
 import { addRecent, getSgfNodeFavorites, getSgfPosition, saveSgfPosition, toggleSgfNodeFavorite } from '../api/api';
