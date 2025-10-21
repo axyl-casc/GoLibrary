@@ -1,6 +1,6 @@
 # Go Library
 
-An offline-first bookshelf experience for Baduk/Go materials. The project combines a Node.js + Express backend with a React front-end to organize and view PDF, SGF, and HTML resources. The backend indexes the local library, generates thumbnails, and persists user-specific state in SQLite. The front-end offers a rich shelf UI with favorites, bookmarks, and resumable reading positions.
+An offline-first bookshelf experience for Baduk/Go materials. The project combines a Node.js + Express backend with a React front-end to organize and view PDF, SGF, and HTML resources. The backend indexes the local library, generates thumbnails, and persists user-specific state in SQLite. The front-end offers a rich shelf UI with favorites, bookmarks, and resumable reading positions. Check out the project on [GitHub](https://github.com/axyl-casc/GoLibrary).
 
 ## Prerequisites
 
@@ -104,3 +104,7 @@ Environment variables:
 - The backend automatically scans the `library/` directory on startup and watches for changes with `chokidar`.
 - PDF thumbnails are rendered with `pdfjs-dist` + `node-canvas`; SGF thumbnails use a lightweight renderer to draw the final position.
 - User state (favorites, positions, bookmarks, recents) is stored in `data/library.db`.
+
+## Credits
+
+- SGF viewer powered by [Besogo](https://github.com/yewang/besogo).
