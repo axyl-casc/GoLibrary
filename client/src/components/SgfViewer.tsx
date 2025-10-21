@@ -23,6 +23,7 @@ interface SgfViewerProps {
 export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }: SgfViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boardContainerRef = useRef<HTMLDivElement | null>(null);
+  const panelsContainerRef = useRef<HTMLDivElement | null>(null);
   const viewerRootRef = useRef<HTMLDivElement | null>(null);
   const toolbarRef = useRef<HTMLDivElement | null>(null);
   const [editor, setEditor] = useState<any>(null);
@@ -33,6 +34,7 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
   const updateBoardSize = useCallback(() => {
     const container = containerRef.current;
     const board = boardContainerRef.current;
+    const panels = panelsContainerRef.current;
     const viewerRoot = viewerRootRef.current;
     if (!container || !board || !viewerRoot) return;
     const viewportHeight = window.innerHeight;
@@ -43,7 +45,9 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
     const size = Math.min(containerWidth, availableHeight);
     board.style.width = `${size}px`;
     board.style.height = `${size}px`;
-    container.style.height = `${size}px`;
+    if (panels) {
+      panels.style.width = `${size}px`;
+    }
   }, []);
 
   useEffect(() => {
@@ -86,7 +90,10 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
       containerRef.current.classList.add('besogo-custom-container');
       containerRef.current.style.justifyContent = 'center';
       containerRef.current.style.alignItems = 'center';
+      containerRef.current.style.flexDirection = 'column';
+      containerRef.current.style.gap = '12px';
       boardContainerRef.current = null;
+      panelsContainerRef.current = null;
       const response = await fetch(`/api/items/${item.id}/content`);
       const sgfText = await response.text();
       const { besogo } = window;
@@ -96,7 +103,12 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
       boardDiv.className = 'besogo-board';
       containerRef.current.appendChild(boardDiv);
       boardContainerRef.current = boardDiv;
+      const panelsDiv = document.createElement('div');
+      panelsDiv.className = 'besogo-panels';
+      containerRef.current.appendChild(panelsDiv);
+      panelsContainerRef.current = panelsDiv;
       besogo.makeBoardDisplay(boardDiv, newEditor);
+      besogo.makeControlPanel(panelsDiv, newEditor);
       updateBoardSize();
       const parsed = besogo.parseSgf(sgfText);
       besogo.loadSgf(parsed, newEditor);
@@ -139,31 +151,6 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
     }
   }
 
-  const goFirst = () => {
-    if (!editor) return;
-    moveToNodeInternal(editor, 0);
-    setNodeIndex(0);
-  };
-
-  const goPrev = () => {
-    if (!editor) return;
-    editor.prevNode(1);
-  };
-
-  const goNext = () => {
-    if (!editor) return;
-    editor.nextNode(1);
-  };
-
-  const goLast = () => {
-    if (!editor) return;
-    let steps = 0;
-    while (editor.getCurrent().children.length > 0 && steps < 1000) {
-      editor.nextNode(1);
-      steps++;
-    }
-  };
-
   const toggleNodeFavorite = async () => {
     const favored = nodeFavorites.has(nodeIndex);
     await toggleSgfNodeFavorite(userId, item.id, nodeIndex, !favored);
@@ -174,11 +161,7 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
   return (
     <div className="viewer sgf-viewer" ref={viewerRootRef}>
       <div className="viewer-toolbar" ref={toolbarRef}>
-        <button onClick={goFirst}>⏮</button>
-        <button onClick={goPrev}>◀</button>
         <span>Move {nodeIndex}</span>
-        <button onClick={goNext}>▶</button>
-        <button onClick={goLast}>⏭</button>
         <button onClick={() => setAutoplay((prev) => !prev)}>{autoplay ? 'Stop' : 'Autoplay'}</button>
         <FavoritesToggle
           favored={isFavorite}
