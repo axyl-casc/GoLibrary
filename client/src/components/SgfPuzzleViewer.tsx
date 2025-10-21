@@ -46,9 +46,15 @@ function ensureGliftScript(): Promise<void> {
 
 export default function SgfPuzzleViewer({ userId, item, isFavorite, onToggleFavorite }: SgfPuzzleViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const widgetRef = useRef<any | null>(null);
   const [status, setStatus] = useState<PuzzleStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const statusRef = useRef<PuzzleStatus>('idle');
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   const containerId = useMemo(() => `glift-viewer-${item.id}-${Math.random().toString(36).slice(2)}`, [item.id]);
 
@@ -81,6 +87,70 @@ export default function SgfPuzzleViewer({ userId, item, isFavorite, onToggleFavo
 
         containerRef.current.innerHTML = '';
 
+        const evaluatePuzzleStatus = (result?: 'correct' | 'incorrect') => {
+          if (cancelled) {
+            return;
+          }
+
+          const widget = widgetRef.current;
+          if (!widget || !widget.controller) {
+            if (result && statusRef.current !== result) {
+              setStatus(result);
+            }
+            return;
+          }
+
+          try {
+            const controller = widget.controller;
+            const flattened =
+              typeof controller.flattenedState === 'function' ? controller.flattenedState() : null;
+            const commentValue =
+              flattened && typeof flattened.comment === 'function' ? flattened.comment() : '';
+            const comment = typeof commentValue === 'string' ? commentValue : '';
+            const normalizedComment = comment.toLowerCase();
+            const hasCorrectWord =
+              /\bcorrect\b/.test(normalizedComment) && !/\balmost\s+correct\b/.test(normalizedComment);
+
+            if (hasCorrectWord) {
+              if (statusRef.current !== 'correct') {
+                setStatus('correct');
+              }
+              return;
+            }
+
+            if (result === 'correct') {
+              if (statusRef.current !== 'correct') {
+                setStatus('correct');
+              }
+              return;
+            }
+
+            const movetree = controller.movetree;
+            const currentNode = movetree && typeof movetree.node === 'function' ? movetree.node() : null;
+            const numChildren =
+              currentNode && typeof currentNode.numChildren === 'function'
+                ? currentNode.numChildren()
+                : undefined;
+
+            if (typeof numChildren === 'number') {
+              if (numChildren === 0) {
+                if (statusRef.current !== 'incorrect') {
+                  setStatus('incorrect');
+                }
+              } else if (numChildren > 0 && statusRef.current === 'incorrect') {
+                setStatus('idle');
+              }
+            } else if (result === 'incorrect' && statusRef.current !== 'incorrect') {
+              setStatus('incorrect');
+            }
+          } catch (evaluationError) {
+            console.warn('Failed to evaluate puzzle status', evaluationError);
+            if (result && statusRef.current !== result) {
+              setStatus(result);
+            }
+          }
+        };
+
         currentWidget = glift.create({
           divId: containerId,
           sgf: {
@@ -93,16 +163,17 @@ export default function SgfPuzzleViewer({ userId, item, isFavorite, onToggleFavo
           hooks: {
             problemCorrect: () => {
               if (!cancelled) {
-                setStatus('correct');
+                evaluatePuzzleStatus('correct');
               }
             },
             problemIncorrect: () => {
               if (!cancelled) {
-                setStatus('incorrect');
+                evaluatePuzzleStatus('incorrect');
               }
             },
           },
         });
+        widgetRef.current = currentWidget;
         if (!cancelled) {
           setLoading(false);
         }
@@ -126,6 +197,7 @@ export default function SgfPuzzleViewer({ userId, item, isFavorite, onToggleFavo
           console.warn('Failed to destroy Glift widget', destroyError);
         }
       }
+      widgetRef.current = null;
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
