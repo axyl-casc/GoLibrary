@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title> BaseWidgetTest </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      html, body, #wrap {
+        height: 100%;
+      }
+      #glift_display1 {
+        height:100%;
+        position:relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative;">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        var basicWidget = glift.create({
+          sgf: testdata.sgfs.complexproblem,
+          divId: 'glift_display1',
+          sgfOptions: {
+            widgetType: 'STANDARD_PROBLEM'
+          }
+        });
+      </script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> TygemGameTester </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+    <script type="text/javascript" src="../testdata/tygem_example.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #glift_display1 {
+        height:500px;
+        width:100%;
+        position:relative;
+      }
+      p {
+        margin: 10px;
+        padding: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative;">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        (function() {
+          gameViewer = glift.create({
+            divId: 'glift_display1',
+            sgf: {
+              sgfString: testdata.gib.tygemExample,
+              parseType: 'TYGEM',
+              //sgfString: testdata.sgfs.leeGuGame6,
+              rotation: 'CLOCKWISE_270'
+            },
+            display: {
+              theme: 'DEPTH',
+              goBoardBackground: '../../src/themes/assets/bambootile_warm.jpg',
+              drawBoardCoords: true,
+              disableZoomForMobile: true
+            }
+          });
+          window.onresize = function() {
+            gameViewer.redraw();
+          };
+        })();
+      </script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+# Generated files
+/compiled/*
+test/htmltests_gen/*
+
+# Misc settings
+.DS_STORE
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Nodejs
+node_modules
+
+# For testing Markdown
+README.md.html 

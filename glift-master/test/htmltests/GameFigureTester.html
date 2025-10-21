@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+  <title> GameFigureTester </title>
+  <script type="text/javascript" src="../testdata/sgfs.js"></script>
+  <script type="text/javascript" src="../testdata/gogameguru_commentary.js"></script>
+
+  <!-- AUTO-GEN-DEPS -->
+  <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      html, body, #wrap {
+        height: 100%;
+      }
+      #glift_display1 {
+        height:100%;
+        position:relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative;">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        var exampleWidget = glift.create({
+          divId: "glift_display1",
+          sgf: {
+            sgfString: testdata.gogameguru_commentary,
+            widgetType: 'EXAMPLE',
+            initialPosition: 140,
+            nextMovesPath: '0:30',
+            // uiComponents: ['BOARD'],
+          },
+          display: {
+            disableZoomForMobile: true
+          }
+        });
+      </script>
+    </div>
+  </body>
+</html>

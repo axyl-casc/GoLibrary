@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title> AjaxTester </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #glift_display1 {
+        height:95%;
+        position:relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative;">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        var basicProblem = glift.create({
+          divId: 'glift_display1',
+          sgfCollection: [
+            {
+              url: '../testdata/problem9.sgf',
+              initialPosition: '1'
+            },
+            '../testdata/problem10.sgf',
+            '../testdata/ajax3_13.sgf',
+            '../testdata/ajax_problem.sgf',
+            '../testdata/ajax_problem2.sgf',
+            '../testdata/9x9prob.sgf'
+          ],
+          sgfDefaults: {
+            widgetType: 'STANDARD_PROBLEM'
+          }
+        });
+        $(window).resize(function() {
+          basicProblem.destroy().draw();
+        });
+      </script>
+    </div>
+  </body>
+</html>

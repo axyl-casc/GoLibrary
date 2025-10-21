@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title> MarksTester </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        position: relative;
+      }
+      #glift_display1 {
+        height:500px;
+        width:100%;
+        position:relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative;">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        (function() {
+          window.gliftWidget = glift.create({
+            sgf: testdata.sgfs.marktest,
+            divId: "glift_display1",
+            sgfDefaults : {
+              widgetType: 'EXAMPLE'
+            },
+            display: {
+              theme: "DEPTH",
+              goBoardBackground: '../../src/themes/assets/bambootile_warm.jpg'
+            }
+          });
+          var pt = glift.util.point(8, 10);
+          gliftWidget.getCurrentWidget().display.intersections().addGuideLines(pt);
+        })();
+      </script>
+    </div>
+  </body>
+</html>

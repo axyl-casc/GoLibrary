@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title> ExampleTester </title>
+<script type="text/javascript" src="../testdata/sgfs.js"></script>
+<script type="text/javascript" src="../testdata/gogameguru_commentary.js"></script>
+
+<!-- AUTO-GEN-DEPS -->
+<!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      html, body, #wrap {
+        height: 100%;
+      }
+      #glift_display1 {
+        height:100%;
+        position:relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative;">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        (function() {
+          gameViewer = glift.create({
+            divId: 'glift_display1',
+            sgf: {
+              sgfString: testdata.gogameguru_commentary,
+              widgetType: 'EXAMPLE',
+              initialPosition: 50,
+              uiComponents: ['BOARD'],
+              nextMovesPath: '0:6'
+            },
+            display: {
+              theme: 'DEPTH',
+              goBoardBackground: '../../src/themes/assets/bambootile_warm.jpg',
+              useMarkdown: true,
+              disableZoomForMobile: true
+            }
+          });
+          window.onresize = function() {
+            gameViewer.redraw();
+          };
+        })();
+      </script>
+    </div>
+  </body>
+</html>

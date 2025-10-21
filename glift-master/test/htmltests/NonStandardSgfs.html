@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> NonStandardSgfs </title>
+    <script type="text/javascript" src="../testdata/nonstandard.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #glift_display1 {
+        height:500px;
+        width:100%;
+        position:relative;
+      }
+      p {
+        margin: 10px;
+        padding: 10px;
+      }
+      #gheader {
+        position:relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative;">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        (function() {
+          gameViewer = glift.create({
+            divId: 'glift_display1',
+            sgfCollection: [
+              nonstandard.emptyNodes,
+              nonstandard.clearLocations,
+            ],
+            display: {
+              theme: 'DEPTH',
+              goBoardBackground: '../../src/themes/assets/bambootile_warm.jpg',
+              drawBoardCoords: true,
+              useMarkdown: true,
+              disableZoomForMobile: true
+            }
+          });
+          window.onresize = function() {
+            gameViewer.redraw();
+          };
+        })();
+      </script>
+    </div>
+  </body>
+</html>

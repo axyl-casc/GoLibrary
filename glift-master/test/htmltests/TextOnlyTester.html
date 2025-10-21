@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> Text Only Tester </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #glift_display1 {
+        width:100%;
+        height:500px;
+        position:relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative; width:100%">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        var basicProblem = glift.create({
+          allowWrapAround: true,
+          sgfCollection: [
+            {
+              sgfString: testdata.sgfs.complexproblem,
+              widgetType: 'EXAMPLE',
+              disableCommentBox: true
+            }
+          ],
+          divId: "glift_display1",
+          sgfDefaults: {
+            widgetType: 'STANDARD_PROBLEM'
+          },
+          display: {
+            drawBoardCoords: true,
+            disableZoomForMobile: true
+            // theme: 'COLORFUL' // useful for debugging box issues.
+          }
+        });
+        window.onresize = function() {
+          basicProblem.redraw();
+        };
+      </script>
+    </div>
+  </body>
+</html>

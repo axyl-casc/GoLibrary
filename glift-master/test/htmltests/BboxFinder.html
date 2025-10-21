@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title> BBoxFinder </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+    <script type="text/javascript" src="../libs/raphael-min.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+  </head>
+
+  <body>
+    <!-- Create a div as a place holder just so we can create a Raphael paper. -->
+    <div id="glift_display1">
+    <script type="text/javascript">
+
+    (function() {
+      var paper = Raphael('glift_display1', 1000, 1000);
+      for (var key in glift.displays.icons.svg) {
+        var pathobj = paper.path(glift.displays.icons.svg[key].string);
+        var bbox = pathobj.getBBox();
+        console.log(key)
+        console.log(JSON.stringify(bbox));
+      };
+    })();
+    </script>
+  </body>
+</html>

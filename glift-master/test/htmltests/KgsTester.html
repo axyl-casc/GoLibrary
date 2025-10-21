@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title> KgsTester </title>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #glift_display1 {
+        height:500px;
+        position:relative;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative;">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        (function() {
+          gameViewer = glift.create({
+            divId: "glift_display1",
+            sgfDefaults: {
+              boardRegion: 'ALL'
+            },
+            display: {
+              theme: 'DEPTH',
+              goBoardBackground: '../../src/themes/assets/bambootile_warm.jpg'
+            }
+          });
+        })();
+      </script>
+    </div>
+  </body>
+</html>

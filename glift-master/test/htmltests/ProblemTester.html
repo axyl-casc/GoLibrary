@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> ProblemTester </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #glift_display1 {
+        width:100%;
+        height:500px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap" style="position:relative; width:100%">
+      <div id="gheader"></div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        var basicProblem = glift.create({
+          allowWrapAround: true,
+          sgfCollection: [
+            testdata.sgfs.complexproblem,
+            {
+              sgfString: testdata.sgfs.passingExample,
+              initialPosition: 2,
+            },{
+              widgetType: 'EXAMPLE',
+              sgfString: testdata.sgfs.trivialproblem,
+              rotation: 'CLOCKWISE_270',
+              boardRegion: 'TOP_LEFT'
+            },
+            testdata.sgfs.realproblem,
+            {
+              sgfString: testdata.sgfs.gogameguruHard,
+              rotation: 'CLOCKWISE_180',
+              boardRegion: 'TOP_LEFT'
+            }, {
+              sgfString: '(;AB[mc][pd][qd][oe][of][pf][cp]'
+                + 'AW[lc][oc][md][od][ne][pe][eq]C[Copy this joseki.]'
+                + 'CA[UTF-8]FF[4]GM[1]PL[B]SZ[19];B[gq];W[do];B[dp];W[ep];B[eo];W[fo];B[en]'
+                + ';W[gp];B[dn];GB[]W[hq])'
+            }
+          ],
+          divId: "glift_display1",
+          sgfDefaults: {
+            widgetType: 'STANDARD_PROBLEM'
+          },
+          display: {
+            drawBoardCoords: true,
+            disableZoomForMobile: true
+            // theme: 'COLORFUL' // useful for debugging box issues.
+          }
+        });
+        window.onresize = function() {
+          basicProblem.redraw();
+        };
+      </script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title> PerfTester </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+    <script type="text/javascript" src="../testdata/gogameguru_commentary.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #glift_display1 {
+        height:500px;
+        width:100%;
+        position:relative;
+      }
+      .perf-title {
+        margin: 5px;
+      }
+      #gheader {
+        border: 1px solid black;
+        border-radius: 10px;
+        box-shadow: 5px 5px 5px #888888;
+        margin: 5px;
+        padding: 5px;
+      }
+      #gheader table {
+      }
+      #gheader thead td {
+        font-weight: bold;
+        padding-right: 10px;
+      }
+      #gheader .perf-cell {
+        padding-right: 10px;
+      }
+      p {
+        margin: 10px;
+        padding: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1 class="perf-title"> Glift Performance Testing </h1>
+
+    <div id="wrap" style="position:relative;">
+      <div id="gheader">
+      <table>
+        <thead>
+          <tr class="gheader-head">
+            <td> Start (ms) </td>
+            <td> End (ms) </td>
+            <td> Runs </td>
+            <td> Delta (ms) </td>
+            <td> Average Time (ms) </td>
+            <td> Description </td>
+          </tr>
+        </thead>
+        <tbody id="gheader-body">
+          <!-- Perf content goes here -->
+        </tbody>
+      </table>
+      </div>
+      <div id="glift_display1"></div>
+      <div id="extra_info"></div>
+      <script type="text/javascript">
+        (function() {
+          // Truncate to microsecond resolution
+          var truncate = function(num) {
+            return Math.round(num*10000)/10000.;
+          };
+          // Create a table cell element with some text.
+          var td = function(text) {
+            var tdElem = document.createElement('td');
+            tdElem.setAttribute('class', 'perf-cell');
+            tdElem.appendChild(document.createTextNode(text));
+            return tdElem;
+          };
+          // Record a perf message.
+          var recordPerf = function(start, end, runs, text) {
+            var elem = document.getElementById('gheader-body');
+
+            var row = document.createElement('tr');
+            row.appendChild(td(truncate(start)));
+            row.appendChild(td(truncate(end)));
+            row.appendChild(td(truncate(runs)));
+            row.appendChild(td(truncate((end - start))));
+            row.appendChild(td(truncate((end - start)/runs)));
+            row.appendChild(td(text));
+
+            elem.appendChild(row);
+          };
+          var perfTest = function(desc, runs, fn) {
+            var start = performance.now();
+            for (var i = 0; i < runs; i++) {
+              fn();
+            }
+            var end = performance.now();
+            recordPerf(start, end, runs, desc);
+          };
+
+          var commentary = testdata.gogameguru_commentary;
+
+          /////////////////////////////////////////////////////////////////
+          // -------------------------- Tests -------------------------- //
+          /////////////////////////////////////////////////////////////////
+
+          perfTest('Iterate over all characters in a raw SGF', 1000, function() {
+            for (var i = 0; i < commentary.length; i++) {
+              var char = commentary.charAt(0);
+            }
+          });
+
+          perfTest('Parse a movetree for a real game', 1000, function() {
+            glift.parse.fromString(commentary);
+          });
+
+          var mt = glift.rules.movetree.getFromSgf(commentary, 200);
+          perfTest('Add stones to goban from movetree', 10000, function() {
+            var goban = glift.rules.goban.getInstance();
+            goban.loadStonesFromMovetree(mt);
+          });
+
+          var keyGoban = glift.rules.goban.getInstance();
+          keyGoban.loadStonesFromMovetree(mt);
+          perfTest('Create a string key for a go board', 10000, function() {
+            var out = '';
+            for (var i = 0; i < keyGoban.intersections(); i++) {
+              for (var j = 0; j < keyGoban.intersections(); j++) {
+                // Note that string concatenation is much faster than using
+                // arrays as buffers. Oh, javascript...
+                out += '-' + keyGoban.getStone(glift.util.point(i, j));
+              }
+            }
+          });
+
+          mt = glift.rules.movetree.getFromSgf(commentary, 100);
+          perfTest('Flatten a movetree with a next moves path', 1000, function() {
+            var flattened = glift.flattener.flatten(mt, {
+              nextMovesPath: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            });
+          });
+
+        })(); // End Perf Tests
+
+      </script>
+    </div>
+  </body>
+</html>

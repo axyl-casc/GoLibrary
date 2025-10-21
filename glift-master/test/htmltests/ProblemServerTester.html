@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> ProblemServerTester </title>
+    <script type="text/javascript" src="../testdata/sgfs.js"></script>
+
+    <!-- AUTO-GEN-DEPS -->
+    <!-- END-AUTO-GEN-DEPS -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        position: static;
+      }
+      #wrap {
+        position: static;
+      }
+      #glift_div  {
+        position: absolute;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="wrap">
+      <div id="glift_div"></div>
+    </div>
+  </body>
+
+  <script type="text/javascript">
+    var basicProblem = glift.create({
+      sgfCollection: [
+        testdata.sgfs.complexproblem,
+      ],
+      divId: 'glift_div',
+      sgfDefaults: {
+        widgetType: 'STANDARD_PROBLEM'
+      },
+      display: {
+        disableZoomForMobile: true
+      }
+    });
+    window.onresize = function() {
+      basicProblem.redraw();
+    };
+  </script>
+</html>
