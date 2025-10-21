@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'besogo/besogo.all.js';
 import 'besogo/css/besogo.css';
 import 'besogo/css/board-wood.css';
@@ -22,33 +22,23 @@ interface SgfViewerProps {
 
 export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }: SgfViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const boardContainerRef = useRef<HTMLDivElement | null>(null);
-  const panelsContainerRef = useRef<HTMLDivElement | null>(null);
-  const viewerRootRef = useRef<HTMLDivElement | null>(null);
-  const toolbarRef = useRef<HTMLDivElement | null>(null);
   const [editor, setEditor] = useState<any>(null);
   const [nodeIndex, setNodeIndex] = useState(0);
   const [nodeFavorites, setNodeFavorites] = useState<Set<number>>(new Set());
   const [autoplay, setAutoplay] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const itemIdRef = useRef(item.id);
+  const userIdRef = useRef(userId);
+  const restoringRef = useRef(false);
 
-  const updateBoardSize = useCallback(() => {
-    const container = containerRef.current;
-    const board = boardContainerRef.current;
-    const panels = panelsContainerRef.current;
-    const viewerRoot = viewerRootRef.current;
-    if (!container || !board || !viewerRoot) return;
-    const viewportHeight = window.innerHeight;
-    const viewerTop = viewerRoot.getBoundingClientRect().top;
-    const toolbarHeight = toolbarRef.current?.offsetHeight ?? 0;
-    const availableHeight = Math.max(viewportHeight - viewerTop - toolbarHeight - 48, 240);
-    const containerWidth = container.getBoundingClientRect().width;
-    const size = Math.min(containerWidth, availableHeight);
-    board.style.width = `${size}px`;
-    board.style.height = `${size}px`;
-    if (panels) {
-      panels.style.width = `${size}px`;
-    }
-  }, []);
+  useEffect(() => {
+    itemIdRef.current = item.id;
+  }, [item.id]);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+  }, [userId]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
@@ -67,7 +57,88 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
   }, [autoplay, editor]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      if (!containerRef.current || cancelled) return;
+      setLoading(true);
+      setError(null);
+      setAutoplay(false);
+      setNodeFavorites(new Set());
+      setNodeIndex(0);
+      const response = await fetch(`/api/items/${item.id}/content`);
+      if (!response.ok) {
+        throw new Error(`Failed to load SGF (${response.status})`);
+      }
+      if (cancelled) return;
+      const sgfText = await response.text();
+      if (cancelled) return;
+      const container = containerRef.current;
+      if (!container) return;
+      const { besogo } = window;
+      if (!besogo) {
+        throw new Error('BesoGo is not available in the window scope');
+      }
+      if (!container.classList.contains('besogo-container')) {
+        container.innerHTML = '';
+        besogo.create(container, {
+          panels: 'control+names+comment+tree',
+          tool: 'navOnly',
+        });
+      }
+      const newEditor = container.besogoEditor;
+      if (!newEditor) {
+        throw new Error('Failed to initialize BesoGo viewer');
+      }
+      const parsed = besogo.parseSgf(sgfText);
+      besogo.loadSgf(parsed, newEditor);
+      newEditor.setTool('navOnly');
+      setEditor(newEditor);
+      await addRecent(userId, item.id);
+      if (cancelled) return;
+      const saved = await getSgfPosition(userId, item.id);
+      if (cancelled) return;
+      restoringRef.current = true;
+      moveToNodeInternal(newEditor, saved?.nodeIndex ?? 0);
+      setNodeIndex(saved?.nodeIndex ?? 0);
+      restoringRef.current = false;
+      const favorites = await getSgfNodeFavorites(userId, item.id);
+      if (cancelled) return;
+      setNodeFavorites(new Set(favorites));
+      if (cancelled) return;
+      setLoading(false);
+    };
+    load().catch((err) => {
+      if (!cancelled) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        setLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [item.id, userId]);
+
+  useEffect(() => {
     if (!editor) return;
+    let disposed = false;
+
+    const listener = (msg: any) => {
+      if (disposed || !msg.navChange) {
+        return;
+      }
+      const current = editor.getCurrent();
+      const moveNumber = current.moveNumber || 0;
+      setNodeIndex(moveNumber);
+      if (!restoringRef.current) {
+        saveSgfPosition(userIdRef.current, itemIdRef.current, moveNumber).catch(() => {
+          /* ignore persistence errors */
+        });
+      }
+    };
+
+    editor.addListener(listener);
+
     const handler = (event: KeyboardEvent) => {
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
@@ -78,82 +149,14 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
         editor.nextNode(1);
       }
     };
+
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+
+    return () => {
+      disposed = true;
+      window.removeEventListener('keydown', handler);
+    };
   }, [editor]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      if (!containerRef.current || cancelled) return;
-      containerRef.current.innerHTML = '';
-      containerRef.current.classList.add('besogo-container');
-      containerRef.current.classList.add('besogo-custom-container');
-      containerRef.current.style.justifyContent = 'center';
-      containerRef.current.style.alignItems = 'center';
-      containerRef.current.style.flexDirection = 'column';
-      containerRef.current.style.gap = '12px';
-      boardContainerRef.current = null;
-      panelsContainerRef.current = null;
-      const response = await fetch(`/api/items/${item.id}/content`);
-      if (cancelled) return;
-      const sgfText = await response.text();
-      if (cancelled) return;
-      const { besogo } = window;
-      const newEditor = besogo.makeEditor(19, 19);
-      newEditor.setTool('navOnly');
-      const boardDiv = document.createElement('div');
-      boardDiv.className = 'besogo-board';
-      if (cancelled) return;
-      containerRef.current.appendChild(boardDiv);
-      boardContainerRef.current = boardDiv;
-      const panelsDiv = document.createElement('div');
-      panelsDiv.className = 'besogo-panels';
-      if (cancelled) return;
-      containerRef.current.appendChild(panelsDiv);
-      panelsContainerRef.current = panelsDiv;
-      if (cancelled) return;
-      besogo.makeBoardDisplay(boardDiv, newEditor);
-      besogo.makeControlPanel(panelsDiv, newEditor);
-      updateBoardSize();
-      if (cancelled) return;
-      const parsed = besogo.parseSgf(sgfText);
-      besogo.loadSgf(parsed, newEditor);
-      newEditor.addListener(async (msg: any) => {
-        if (msg.navChange) {
-          const current = newEditor.getCurrent();
-          const moveNumber = current.moveNumber || 0;
-          setNodeIndex(moveNumber);
-          await saveSgfPosition(userId, item.id, moveNumber);
-        }
-      });
-      if (cancelled) return;
-      setEditor(newEditor);
-      await addRecent(userId, item.id);
-      if (cancelled) return;
-      const saved = await getSgfPosition(userId, item.id);
-      if (cancelled) return;
-      moveToNodeInternal(newEditor, saved?.nodeIndex ?? 0);
-      setNodeIndex(saved?.nodeIndex ?? 0);
-      const favorites = await getSgfNodeFavorites(userId, item.id);
-      if (cancelled) return;
-      setNodeFavorites(new Set(favorites));
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [item.id, updateBoardSize, userId]);
-
-  useEffect(() => {
-    if (!editor) return;
-    updateBoardSize();
-    window.addEventListener('resize', updateBoardSize);
-    return () => {
-      window.removeEventListener('resize', updateBoardSize);
-    };
-  }, [editor, updateBoardSize]);
 
   function moveToNodeInternal(ed: any, target: number) {
     while (ed.getCurrent().parent) {
@@ -174,10 +177,10 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
   };
 
   return (
-    <div className="viewer sgf-viewer" ref={viewerRootRef}>
-      <div className="viewer-toolbar" ref={toolbarRef}>
+    <div className="viewer sgf-viewer">
+      <div className="viewer-toolbar">
         <span>Move {nodeIndex}</span>
-        <button onClick={() => setAutoplay((prev) => !prev)}>{autoplay ? 'Stop' : 'Autoplay'}</button>
+        <button disabled={!editor} onClick={() => setAutoplay((prev) => !prev)}>{autoplay ? 'Stop' : 'Autoplay'}</button>
         <FavoritesToggle
           favored={isFavorite}
           onToggle={(event) => {
@@ -189,7 +192,11 @@ export default function SgfViewer({ userId, item, isFavorite, onToggleFavorite }
           {nodeFavorites.has(nodeIndex) ? '★ Node' : '☆ Node'}
         </button>
       </div>
-      <div className="sgf-board" ref={containerRef} />
+      <div className="sgf-board">
+        <div className="besogo-viewer" ref={containerRef} />
+        {loading && !error && <div className="viewer-loading">Loading game…</div>}
+        {error && <div className="viewer-error">{error}</div>}
+      </div>
     </div>
   );
 }
