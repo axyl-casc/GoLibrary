@@ -38,8 +38,14 @@
   border: 1px solid rgba(164, 22, 26, 0.2);
 }
 
+.pdf-viewer {
+  align-items: center;
+}
+
 .pdf-viewer canvas {
-  width: 100%;
+  display: block;
+  max-width: 100%;
+  height: auto;
   border-radius: 12px;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.1);
 }
