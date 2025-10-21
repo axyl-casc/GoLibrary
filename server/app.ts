@@ -5,6 +5,7 @@ import fs from 'fs';
 import mime from 'mime-types';
 import { config } from './config';
 import { db, now } from './lib/db';
+import { initializeStaticUsers, loadStaticUsers } from './lib/staticUsers';
 import { scanLibrary } from './lib/indexer';
 import { startWatcher } from './lib/watcher';
 import { generateThumbnail } from './lib/thumbs';
@@ -23,53 +24,19 @@ if (config.clientOrigin) {
 
 app.use(express.json());
 
+initializeStaticUsers();
+
 app.get('/api/users', (_req, res) => {
-  const users = db.prepare('SELECT id, name, preferences FROM users ORDER BY name').all();
-  res.json(
-    users.map((user: any) => ({
-      ...user,
-      preferences: user.preferences ? JSON.parse(user.preferences) : {}
-    }))
-  );
+  res.json(loadStaticUsers());
 });
 
-app.post('/api/users', (req, res) => {
-  const { id, name, preferences } = req.body;
-  if (!id || !name) {
-    return res.status(400).json({ error: 'id and name are required' });
-  }
-  try {
-    db.prepare('INSERT INTO users (id, name, preferences, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?)').run(
-      id,
-      name,
-      JSON.stringify(preferences ?? {}),
-      now(),
-      now()
-    );
-    res.status(201).json({ id, name, preferences: preferences ?? {} });
-  } catch (err: any) {
-    res.status(400).json({ error: err.message });
-  }
-});
+const userManagementDisabled = (_req: express.Request, res: express.Response) => {
+  res.status(405).json({ error: 'User management is disabled. Update data/users.json to change users.' });
+};
 
-app.patch('/api/users/:id', (req, res) => {
-  const { id } = req.params;
-  const { name, preferences } = req.body;
-  const result = db
-    .prepare('UPDATE users SET name = COALESCE(?, name), preferences = COALESCE(?, preferences), updatedAt = ? WHERE id = ?')
-    .run(name ?? null, preferences ? JSON.stringify(preferences) : null, now(), id);
-  if (result.changes === 0) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-  const user = db.prepare('SELECT id, name, preferences FROM users WHERE id = ?').get(id);
-  res.json({ ...user, preferences: user.preferences ? JSON.parse(user.preferences) : {} });
-});
-
-app.delete('/api/users/:id', (req, res) => {
-  const { id } = req.params;
-  db.prepare('DELETE FROM users WHERE id = ?').run(id);
-  res.status(204).end();
-});
+app.post('/api/users', userManagementDisabled);
+app.patch('/api/users/:id', userManagementDisabled);
+app.delete('/api/users/:id', userManagementDisabled);
 
 app.get('/api/items', (req, res) => {
   const { type, folder, q, sort = 'updatedAt', page = '1', limit = '40' } = req.query as Record<string, string>;

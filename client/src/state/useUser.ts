@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createUser, deleteUser, getUsers, updateUser } from '../api/api';
+import { getUsers } from '../api/api';
 import { User } from './types';
 
 const STORAGE_KEY = 'go-library-user';
@@ -13,15 +13,21 @@ export function useUser() {
     setLoading(true);
     const list = await getUsers();
     setUsers(list);
-    if (!currentUserId) {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && list.find((user) => user.id === stored)) {
-        setCurrentUserId(stored);
-      } else if (list.length > 0) {
-        setCurrentUserId(list[0].id);
-        localStorage.setItem(STORAGE_KEY, list[0].id);
-      }
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const storedUser = stored ? list.find((user) => user.id === stored) : undefined;
+
+    let nextId: string | null = null;
+    if (list.length === 0) {
+      nextId = null;
+    } else if (currentUserId && list.some((user) => user.id === currentUserId)) {
+      nextId = currentUserId;
+    } else if (storedUser) {
+      nextId = storedUser.id;
+    } else {
+      nextId = list[0].id;
     }
+
+    setCurrentUserId(nextId);
     setLoading(false);
   }, [currentUserId]);
 
@@ -32,6 +38,8 @@ export function useUser() {
   useEffect(() => {
     if (currentUserId) {
       localStorage.setItem(STORAGE_KEY, currentUserId);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
     }
   }, [currentUserId]);
 
@@ -41,43 +49,12 @@ export function useUser() {
     setCurrentUserId(id);
   }, []);
 
-  const createNewUser = useCallback(
-    async (user: User) => {
-      await createUser(user);
-      await loadUsers();
-      setCurrentUserId(user.id);
-    },
-    [loadUsers]
-  );
-
-  const updateCurrentUser = useCallback(
-    async (id: string, patch: Partial<User>) => {
-      await updateUser(id, patch);
-      await loadUsers();
-    },
-    [loadUsers]
-  );
-
-  const deleteUserById = useCallback(
-    async (id: string) => {
-      if (currentUserId === id) {
-        setCurrentUserId(null);
-      }
-      await deleteUser(id);
-      await loadUsers();
-    },
-    [currentUserId, loadUsers]
-  );
-
   return {
     users,
     currentUser,
     currentUserId,
     loading,
     selectUser,
-    createNewUser,
-    updateCurrentUser,
-    deleteUserById,
     refresh: loadUsers
   };
 }
