@@ -119,7 +119,15 @@ export default function SgfPuzzleViewer({ userId, item, isFavorite, onToggleFavo
     return () => {
       cancelled = true;
       if (currentWidget && typeof currentWidget.destroy === 'function') {
-        currentWidget.destroy();
+        try {
+          currentWidget.destroy();
+        } catch (destroyError) {
+          // Glift can throw if its DOM has already been removed (e.g. StrictMode double-invokes effects).
+          console.warn('Failed to destroy Glift widget', destroyError);
+        }
+      }
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
       }
     };
   }, [containerId, item.id, userId]);
@@ -141,7 +149,8 @@ export default function SgfPuzzleViewer({ userId, item, isFavorite, onToggleFavo
           {status === 'idle' && 'Solve the problem'}
         </span>
       </div>
-      <div className="sgf-board puzzle-board" id={containerId} ref={containerRef}>
+      <div className="sgf-board puzzle-board">
+        <div className="puzzle-board-inner" id={containerId} ref={containerRef} />
         {loading && !error && <div className="viewer-loading">Loading puzzle…</div>}
         {error && <div className="viewer-error">{error}</div>}
       </div>

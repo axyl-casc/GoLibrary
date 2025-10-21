@@ -159,6 +159,13 @@ button.favored {
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.08);
 }
 
+.puzzle-board-inner {
+  width: min(100%, 640px);
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+}
+
 .viewer-loading,
 .viewer-error {
   position: absolute;
