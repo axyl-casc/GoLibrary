@@ -1,24 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getItems } from '../api/api';
 import { ItemSummary } from '../state/types';
+import { QueryState } from '../state/useQuery';
 import ItemCard from './ItemCard';
 import '../styles/shelf.css';
 
 interface ShelfProps {
-  query: Record<string, string | undefined>;
+  query: QueryState;
+  userId?: string;
   favorites: Set<number>;
   onSelect: (item: ItemSummary) => void;
   onToggleFavorite: (item: ItemSummary) => void;
 }
 
-export default function Shelf({ query, favorites, onSelect, onToggleFavorite }: ShelfProps) {
+export default function Shelf({ query, userId, favorites, onSelect, onToggleFavorite }: ShelfProps) {
   const [items, setItems] = useState<ItemSummary[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef<HTMLDivElement | null>(null);
 
-  const queryKey = useMemo(() => JSON.stringify(query), [query]);
+  const queryKey = useMemo(() => {
+    const userKey = query.favorites === 'true' ? userId ?? null : null;
+    return JSON.stringify({ ...query, __user: userKey });
+  }, [query, userId]);
 
   useEffect(() => {
     setItems([]);
@@ -29,7 +34,13 @@ export default function Shelf({ query, favorites, onSelect, onToggleFavorite }: 
   useEffect(() => {
     if (!hasMore || loading) return;
     setLoading(true);
-    getItems({ ...query, page, limit: 40 })
+    const params = {
+      ...query,
+      page,
+      limit: 40,
+      userId: query.favorites === 'true' ? userId : undefined
+    };
+    getItems(params)
       .then((results) => {
         setItems((prev) => (page === 1 ? results : [...prev, ...results]));
         if (results.length < 40) {
@@ -37,7 +48,7 @@ export default function Shelf({ query, favorites, onSelect, onToggleFavorite }: 
         }
       })
       .finally(() => setLoading(false));
-  }, [page, queryKey]);
+  }, [page, query.favorites, queryKey, userId]);
 
   useEffect(() => {
     const sentinel = observerRef.current;

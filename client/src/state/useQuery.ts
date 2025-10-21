@@ -5,6 +5,7 @@ export interface QueryState {
   folder?: string;
   q?: string;
   sort?: string;
+  favorites?: string;
 }
 
 export function useQueryState(initial: QueryState = {}) {
