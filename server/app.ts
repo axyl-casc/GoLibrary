@@ -366,8 +366,8 @@ if (fs.existsSync(clientDist)) {
 async function bootstrap() {
   await scanLibrary();
   startWatcher();
-  app.listen(config.port, () => {
-    console.log(`Server listening on port ${config.port}`);
+  app.listen(config.port, config.host, () => {
+    console.log(`Server listening on ${config.host}:${config.port}`);
   });
 }
 

@@ -10,6 +10,7 @@ export interface AppConfig {
   concurrencyThumbs: number;
   enableHtmlThumbnails: boolean;
   port: number;
+  host: string;
   clientOrigin?: string;
 }
 
@@ -28,6 +29,7 @@ export const config: AppConfig = {
   concurrencyThumbs: intFromEnv('CONCURRENCY_THUMBS', 2),
   enableHtmlThumbnails: (process.env.ENABLE_HTML_THUMBNAILS ?? 'false').toLowerCase() === 'true',
   port: intFromEnv('PORT', 4000),
+  host: process.env.HOST ?? '0.0.0.0',
   clientOrigin: process.env.CLIENT_ORIGIN
 };
 
